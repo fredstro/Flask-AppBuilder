@@ -9,6 +9,7 @@
 import click
 import os
 import sys
+import logging
 from zipfile import ZipFile
 from . import const as c
 
@@ -32,11 +33,17 @@ def import_application(app_package, appbuilder):
         click.echo(click.style('Was unable to import {0} Error: {1}'.format(app_package, e), fg='red'))
         exit(3)
     if hasattr(_app, 'appbuilder'):
-        return getattr(_app, appbuilder)
+        # if we are using app factory
+        if hasattr(_app,'create_app'):
+            app = _app.create_app()
+            return getattr(_app, appbuilder)
+
+        # and if we are not using app factory
+        else:
+            return  getattr(_app, appbuilder)
     else:
         click.echo(click.style('There in no appbuilder var on your package, you can use appbuilder parameter to config', fg='red'))
         exit(3)
-
 
 def echo_header(title):
     click.echo(click.style(title, fg='green'))
@@ -96,7 +103,9 @@ def create_admin(app, appbuilder, username, firstname, lastname, email, password
                 c.AUTH_REMOTE_USER:"WebServer REMOTE_USER Authentication",
                 c.AUTH_OAUTH:"OAuth Authentication"}
     _appbuilder = import_application(app, appbuilder)
-    click.echo(click.style('Recognized {0}.'.format(auth_type.get(_appbuilder.sm.auth_type,'No Auth method')), fg='green'))
+    logging.critical("_appbuilder={0}".format(dir(_appbuilder)))
+    with _appbuilder.app.test_request_context('/'):
+        click.echo(click.style('Recognized {0}.'.format(auth_type.get(_appbuilder.sm.auth_type,'No Auth method')), fg='green'))
     role_admin = _appbuilder.sm.find_role(_appbuilder.sm.auth_role_admin)
     user = _appbuilder.sm.add_user(username, firstname, lastname, email, role_admin, password)
     if user:

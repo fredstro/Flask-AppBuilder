@@ -124,19 +124,21 @@ class AppBuilder(object):
         self.indexview = indexview or IndexView
         self.static_folder = static_folder
         self.static_url_path = static_url_path
-
         self.app = app
         if app is not None:
             self.init_app(app, session)
 
-    def init_app(self, app, session):
+    def init_app(self, app, session=None):
         """
             Will initialize the Flask app, supporting the app factory pattern.
 
             :param app:
-            :param session: The SQLAlchemy session
+            :param session: The SQLAlchemy session if one is used. 
+                    (i.e. if MongoDB is not used)
 
         """
+        if self.app is None:
+            self.app = app
         app.config.setdefault('APP_NAME', 'F.A.B.')
         app.config.setdefault('APP_THEME', '')
         app.config.setdefault('APP_ICON', '')
