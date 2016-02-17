@@ -70,6 +70,7 @@ class User(Document):
 
     created_by = ReferenceField('self', default=get_user_id())
     changed_by = ReferenceField('self', default=get_user_id())
+    meta = {'allow_inheritance': True }
 
     def is_authenticated(self):
         return True
