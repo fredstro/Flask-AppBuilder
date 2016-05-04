@@ -122,6 +122,17 @@ class MongoEngineInterface(BaseInterface):
         except:
             return False
 
+    def is_list(self, col_name):
+        r"""
+        Check if column is a list of primitives (i.e. not db references)
+        """
+        try:
+            field = self.obj._fields[col_name]
+            return isinstance(field, ListField) and not isinstance(field.field, ReferenceField)
+        except:
+            return False
+
+
     def is_relation_many_to_one(self, col_name):
         try:
             return isinstance(self.obj._fields[col_name], ReferenceField)
@@ -170,19 +181,21 @@ class MongoEngineInterface(BaseInterface):
         except:
                 return -1
 
-    def add(self, item):
+    def add(self, item,cascade=True):
         try:
-            item.save()
+            item.save(cascade=cascade)
             self.message = (as_unicode(self.add_row_message), 'success')
             return True
         except Exception as e:
             self.message = (as_unicode(self.general_error_message + ' ' + str(sys.exc_info()[0])), 'danger')
+            #log.exception("VALUE={0}".format(item.course_duration))
             log.exception(LOGMSG_ERR_DBI_ADD_GENERIC.format(str(e)))
+            #log.exception("err={0}".format(sys.exc_info()))
             return False
 
-    def edit(self, item):
+    def edit(self, item,cascade=True):
         try:
-            item.save()
+            item.save(cascade=cascade)
             self.message = (as_unicode(self.edit_row_message), 'success')
             return True
         except Exception as e:
