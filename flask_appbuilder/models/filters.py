@@ -88,8 +88,7 @@ class BaseFilterConverter(object):
         for conversion in self.conversion_table:
             if getattr(self.datamodel, conversion[0])(col_name):
                 return [item(col_name, self.datamodel) for item in conversion[1]]
-        log.warning('Filter type not supported for column: %s' % col_name)
-
+        log.warning("Filter type not supported for column: {0} on model: {1} table=".format(col_name,self.datamodel))
 
 class Filters(object):
     filters = []
@@ -135,6 +134,8 @@ class Filters(object):
         self.values.append(value)
 
     def add_filter_index(self, column_name, filter_instance_index, value):
+        #log.debug("FILTERIX={0} : {1} : {2}".format(column_name, filter_instance_index, value))
+        #log.debug("all filters={0}".format(self._all_filters[column_name]))
         self._add_filter(self._all_filters[column_name][filter_instance_index], value)
 
     def add_filter(self, column_name, filter_class, value):
@@ -207,7 +208,18 @@ class Filters(object):
         return query
 
     def __repr__(self):
-        retstr = "FILTERS \n"
+        return self.__str__()
+    
+    def __str__(self):
+        retstr = [u'FILTERS']
+        
         for flt, value in self.get_filters_values():
-            retstr = retstr + "%s.%s:%s\n" % (flt.model.__table__, str(flt.column_name), str(value))
-        return retstr
+            val=unicode(value)
+            if hasattr(flt.model,'__table__'):
+                s = u'{0}.{1}:{2}\n'.format(unicode(flt.model.__table__), unicode(flt.column_name), val)
+                retstr.append(s)
+            elif hasattr(flt.model,'_collection'):
+                s=u'{0}.{1}:{2}\n'.format(unicode(flt.model._collection), unicode(flt.column_name),val)
+                retstr.append(s)
+        return u'\n'.join(retstr)
+    
