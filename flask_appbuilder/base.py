@@ -171,6 +171,8 @@ class AppBuilder(object):
     def _init_extension(self, app):
         if not hasattr(app, 'extensions'):
             app.extensions = {}
+        if 'appbuilder' in app.extensions:
+            raise Exception('Appbuilder already initialized')        
         app.extensions['appbuilder'] = self
 
     @property
@@ -242,8 +244,11 @@ class AppBuilder(object):
                        template_folder='templates',
                        static_folder=self.static_folder,
                        static_url_path=self.static_url_path)
-        self.get_app.register_blueprint(bp)
-
+        try:
+            self.get_app.register_blueprint(bp)
+        except Exception as e:
+            
+            log.error("Error in adding blueprint: {0}. Already have :{1}".format(e,self.get_app.blueprints))
     def _add_admin_views(self):
         """
             Registers indexview, utilview (back function), babel views and Security views.
@@ -439,6 +444,7 @@ class AppBuilder(object):
 
     @property
     def get_url_for_login(self):
+        log.critical("auth_view={0}".format(self.sm.auth_view))
         return url_for('%s.%s' % (self.sm.auth_view.endpoint, 'login'))
 
     @property
@@ -459,11 +465,14 @@ class AppBuilder(object):
     def _add_permission(self, baseview):
         try:
             self.sm.add_permissions_view(baseview.base_permissions, baseview.__class__.__name__)
+ 
         except Exception as e:
             log.error(LOGMSG_ERR_FAB_ADD_PERMISSION_VIEW.format(str(e)))
 
     def register_blueprint(self, baseview, endpoint=None, static_folder=None):
-        self.get_app.register_blueprint(baseview.create_blueprint(self, endpoint=endpoint, static_folder=static_folder))
+        bp = baseview.create_blueprint(self, endpoint=endpoint, static_folder=static_folder)
+        if bp.name not in self.get_app.blueprints:
+            self.get_app.register_blueprint(bp)
 
     def _view_exists(self, view):
         for baseview in self.baseviews:
