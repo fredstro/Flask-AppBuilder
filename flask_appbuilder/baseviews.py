@@ -116,7 +116,6 @@ class BaseView(object):
 
         # If endpoint name is not provided, get it from the class name
         self.endpoint = endpoint or self.__class__.__name__
-
         if self.route_base is None:
             self.route_base = '/' + self.__class__.__name__.lower()
 
@@ -154,8 +153,8 @@ class BaseView(object):
         """
         kwargs['base_template'] = self.appbuilder.base_template
         kwargs['appbuilder'] = self.appbuilder
-        return render_template(template, **dict(list(kwargs.items()) + list(self.extra_args.items())))
-
+        return  render_template(template, **dict(list(kwargs.items()) + list(self.extra_args.items()))).encode('utf-8')
+        
     def _prettify_name(self, name):
         """
             Prettify pythonic variable name.
@@ -684,7 +683,7 @@ class BaseCRUDView(BaseModelView):
         self.edit_exclude_columns = self.edit_exclude_columns or []
         # Generate base props
         list_cols = self.datamodel.get_user_columns_list()
-        self.list_columns = self.list_columns or [list_cols[0]]
+        self.list_columns = self.list_columns or list_cols
         self._gen_labels_columns(self.list_columns)
         self.order_columns = self.order_columns or self.datamodel.get_order_columns_list(list_columns=self.list_columns)
         if self.show_fieldsets:
@@ -911,6 +910,9 @@ class BaseCRUDView(BaseModelView):
                 flash(*self.datamodel.message)
                 return None
             else:
+                log.critical("FORM IS NOT VALID! errors:{0}".format(form._errors))
+                for fld in form._fields:
+                    log.critical("Err({0})={1}".format(fld,form._fields[fld].errors))               
                 is_valid_form = False
         if is_valid_form:
             self.update_redirect()
@@ -927,20 +929,23 @@ class BaseCRUDView(BaseModelView):
         orders = get_order_args()
         get_filter_args(self._filters)
         exclude_cols = self._filters.get_relation_cols()
-
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
             abort(404)
         # convert pk to correct type, if pk is non string type.
         pk = self.datamodel.get_pk_value(item)
-
+        #raise ValueError
         if request.method == 'POST':
             form = self.edit_form.refresh(request.form)
             # fill the form with the suppressed cols, generated from exclude_cols
             self._fill_form_exclude_cols(exclude_cols, form)
             # trick to pass unique validation
+            log.critical("IN _EDIT. POST \n\n\n\n\n\n\n")
+            log.critical("item={0}".format(item))
+            log.critical("item.cv={0}".format(item.cv))
             form._id = pk
             if form.validate():
+                log.critical("item.cv={0}".format(item.cv))
                 form.populate_obj(item)
                 self.pre_update(item)
                 if self.datamodel.edit(item):
