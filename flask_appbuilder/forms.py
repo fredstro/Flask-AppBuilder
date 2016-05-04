@@ -225,6 +225,8 @@ class GeneralModelConverter(object):
         extra_fields = extra_fields or {}
         form_props = {}
         for col_name in inc_columns:
+            if col_name[0]=='_': # Form labels can not begin with underscore
+                continue
             if col_name in extra_fields:
                 form_props[col_name] = extra_fields.get(col_name)
             else:
@@ -242,7 +244,8 @@ class DynamicForm(Form):
 
     @classmethod
     def refresh(self, obj=None):
-        form = self(obj=obj)
+        from flask import request
+        form = self(formdata=request.form,obj=obj)
         return form
 
 
