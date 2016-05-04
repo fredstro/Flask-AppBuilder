@@ -5,7 +5,8 @@ from ..filters import BaseFilter, FilterRelation, BaseFilterConverter
 log = logging.getLogger(__name__)
 
 __all__ = ['MongoEngineFilterConverter', 'FilterEqual', 'FilterContains', 'FilterNotContains',
-           'FilterNotStartsWith', 'FilterStartsWith', 'FilterRelationOneToManyEqual', 'FilterRelationManyToManyEqual']
+           'FilterNotStartsWith', 'FilterStartsWith', 'FilterRelationOneToManyEqual', 'FilterRelationManyToManyEqual',
+           'FilterListContains']
 
 
 class FilterEqual(BaseFilter):
@@ -86,6 +87,19 @@ class FilterRelationOneToManyEqual(FilterRelation):
         flt = {'%s' % self.column_name: rel_obj}
         return query.filter(**flt)
 
+class FilterListContains(FilterRelation):
+    r"""
+        Should filter a model on for instance a listfield containing a certain object.
+        In the current implementation in e.g. mongoengine 
+        this yields the same as FilterEqual but this behaviour might change.
+    """
+    name = lazy_gettext('List contains')
+
+    def apply(self, query, value):
+        #rel_obj = self.datamodel.get_related_obj(self.column_name, value)
+        flt = {'{0}'.format(self.column_name) : value}
+        return query.filter(**flt)
+
 
 class FilterRelationManyToManyEqual(FilterRelation):
     name = lazy_gettext('Relation as Many')
@@ -134,4 +148,11 @@ class MongoEngineFilterConverter(BaseFilterConverter):
                         ('is_float', [FilterEqual,
                                          FilterNotEqual,
                                          FilterGreater,
-                                         FilterSmaller]))
+                                         FilterSmaller]),
+                        ('is_gridfs_file', [FilterEqual,
+                                            FilterNotEqual]),
+                        ('is_gridfs_image', [FilterEqual,
+                                            FilterNotEqual]),
+                        ('is_list', [FilterEqual,
+                                            FilterListContains])
+                                        )
