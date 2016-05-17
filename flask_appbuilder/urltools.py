@@ -87,3 +87,10 @@ def get_filter_args(filters):
         re_match = re.findall('_flt_(\d)_(.*)', arg)
         if re_match:
             filters.add_filter_index(re_match[0][1], int(re_match[0][0]), request.args.get(arg))
+
+def get_expand_args():
+    res = []
+    for arg in request.args:
+        if arg == 'expand':
+            res.append(request.args.get(arg))
+    return res
