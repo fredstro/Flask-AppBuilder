@@ -155,6 +155,7 @@ class AppBuilder(object):
         self._add_global_static()
         self._add_global_filters()
         app.before_request(self.sm.before_request)
+        app.after_request(self.sm.after_request)
         self._add_admin_views()
         self._add_addon_views()
         self._add_menu_permissions()
@@ -348,15 +349,13 @@ class AppBuilder(object):
         """
         baseview = self._check_and_init(baseview)
         log.info(LOGMSG_INF_FAB_ADD_VIEW.format(baseview.__class__.__name__, name))
-
         if not self._view_exists(baseview):
-            baseview.appbuilder = self
             self.baseviews.append(baseview)
             self._process_inner_views()
             if self.app:
                 self.register_blueprint(baseview)
                 self._add_permission(baseview)
-        self.add_link(name=name, href=href, icon=icon, label=label,
+            self.add_link(name=name, href=href, icon=icon, label=label,
                       category=category, category_icon=category_icon,
                       category_label=category_label, baseview=baseview)
         return baseview

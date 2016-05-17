@@ -15,4 +15,13 @@ class BaseManager(object):
 
     def post_process(self):
         pass
-
+    @staticmethod
+    def before_request():
+        pass
+    @staticmethod
+    def after_request(response):
+        from flask import g
+        for callback in getattr(g, 'after_request_callbacks', ()):
+            callback(response)
+        return response
+    
