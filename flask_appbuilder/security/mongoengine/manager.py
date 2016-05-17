@@ -116,7 +116,8 @@ class SecurityManager(BaseSecurityManager):
             log.info(c.LOGMSG_INF_SEC_ADD_USER.format(username))
             return user
         except Exception as e:
-            log.error(c.LOGMSG_ERR_SEC_ADD_USER.format(str(e)))
+            log.error(c.LOGMSG_ERR_SEC_ADD_USER.format(unicode(e)))
+            raise e
             return False
 
     def count_users(self):
@@ -281,19 +282,19 @@ class SecurityManager(BaseSecurityManager):
             return pv
         except Exception as e:
             log.error(c.LOGMSG_ERR_SEC_ADD_PERMVIEW.format(str(e)))
-
     def del_permission_view_menu(self, permission_name, view_menu_name):
         try:
             pv = self.find_permission_view_menu(permission_name, view_menu_name)
             # delete permission on view
             pv.delete()
             # if no more permission on permission view, delete permission
-            pv = self.permissionview_model.objects(permission=pv.permission)
-            if not pv:
+            pvlist = self.permissionview_model.objects(permission=pv.permission).first()
+            if pvlist is None:
                 self.del_permission(pv.permission.name)
             log.info(c.LOGMSG_INF_SEC_DEL_PERMVIEW.format(permission_name, view_menu_name))
         except Exception as e:
             log.error(c.LOGMSG_ERR_SEC_DEL_PERMVIEW.format(str(e)))
+            #raise e
 
     def exist_permission_on_views(self, lst, item):
         for i in lst:
