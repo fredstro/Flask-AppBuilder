@@ -35,7 +35,11 @@ class ViewMenu(Document):
 class PermissionView(Document):
     permission = ReferenceField(Permission)
     view_menu = ReferenceField(ViewMenu)
-
+    meta = {
+        'indexes': [
+            {'fields': ('permission', 'view_menu'), 'unique': True}
+        ]
+    }
     def __unicode__(self):
         return str(self.permission).replace('_', ' ') + ' on ' + str(self.view_menu)
 
