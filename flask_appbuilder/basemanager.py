@@ -21,6 +21,8 @@ class BaseManager(object):
     @staticmethod
     def after_request(response):
         from flask import g
+        import logging
+        log = logging.getLogger(__name__)
         for callback in getattr(g, 'after_request_callbacks', ()):
             callback(response)
         return response
