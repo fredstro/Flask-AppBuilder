@@ -57,7 +57,7 @@ class MongoFileField(fields.FileField):
                     content_type=self.data.content_type)
  
 
-class MongoImageField(MongoFileField,fields.ImageField):
+class MongoImageField(MongoFileField):
     """
         GridFS file field.
     """
