@@ -5,8 +5,10 @@ from ..base import BaseInterface
 from ..._compat import as_unicode
 from ...const import LOGMSG_ERR_DBI_ADD_GENERIC, LOGMSG_ERR_DBI_EDIT_GENERIC, LOGMSG_ERR_DBI_DEL_GENERIC, \
                      LOGMSG_WAR_DBI_ADD_INTEGRITY, LOGMSG_WAR_DBI_EDIT_INTEGRITY, LOGMSG_WAR_DBI_DEL_INTEGRITY
-from mongoengine.fields import StringField, IntField, BooleanField, FloatField, \
-    DateTimeField, ReferenceField, ListField, FileField, ImageField, ObjectIdField
+from mongoengine.fields import (StringField, IntField, BooleanField, FloatField, 
+                                   DateTimeField, ReferenceField, ListField, 
+                                   FileField, ImageField, ObjectIdField,
+                                   EmbeddedDocumentField)
 
 log = logging.getLogger(__name__)
 
@@ -152,6 +154,9 @@ class MongoEngineInterface(BaseInterface):
     def is_relation_one_to_many(self, col_name):
         return False
 
+    def is_embedded(self,col_name):
+        return isinstance(self.obj._fields[col_name],EmbeddedDocumentField)
+    
     def is_nullable(self, col_name):
         return not self.obj._fields[col_name].required
 
