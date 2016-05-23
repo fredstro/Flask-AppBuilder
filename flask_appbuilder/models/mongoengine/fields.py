@@ -6,7 +6,8 @@ try:
     from wtforms.fields.core import _unset_value as unset_value
 except ImportError:
     from wtforms.utils import unset_value
-
+import logging
+log = logging.getLogger(__name__)
 
 def is_empty(file_object):
     file_object.seek(0)
@@ -34,27 +35,31 @@ class MongoFileField(fields.FileField):
 
         return super(MongoFileField, self).process(formdata, data)
 
-    def populate_obj(self, obj, name):
+    def populate_obj(self, obj, name,**kwds):
         field = getattr(obj, name, None)
         if field is not None:
             # If field should be deleted, clean it up
             if self._should_delete:
                 field.delete()
                 return
-
+            
             if isinstance(self.data, FileStorage) and not is_empty(self.data.stream):
                 if not field.grid_id:
                     func = field.put
                 else:
                     func = field.replace
-
+                log.critical(" MongoFileField {0} (name={1})".format(func,self.data.filename))
+                # Should we add something like an owner of all files? I.e. instead of the 'ExtendedFile' class etc.
+                #ownerid = kwds.get('ownerid')
+                #if ownerid is None:
                 func(self.data.stream,
-                     filename=self.data.filename,
-                     content_type=self.data.content_type)
+                    filename=self.data.filename,
+                    content_type=self.data.content_type)
+ 
 
-
-class MongoImageField(MongoFileField):
+class MongoImageField(MongoFileField,fields.ImageField):
     """
         GridFS file field.
     """
     widget = BS3ImageUploadFieldWidget()
+    
