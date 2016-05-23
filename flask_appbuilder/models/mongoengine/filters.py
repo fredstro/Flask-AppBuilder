@@ -6,7 +6,7 @@ log = logging.getLogger(__name__)
 
 __all__ = ['MongoEngineFilterConverter', 'FilterEqual', 'FilterContains', 'FilterNotContains',
            'FilterNotStartsWith', 'FilterStartsWith', 'FilterRelationOneToManyEqual', 'FilterRelationManyToManyEqual',
-           'FilterListContains']
+           'FilterListContains','FilterRelationEmbeddedEqual','FilterRelationEmbeddedContains']
 
 
 class FilterEqual(BaseFilter):
@@ -117,6 +117,25 @@ class FilterEqualFunction(BaseFilter):
         flt = {'%s' % self.column_name: func()}
         return query.filter(**flt)
 
+class FilterRelationEmbeddedEqual(FilterRelation):
+    name = lazy_gettext('Relation as Embedded')
+    ## value should be a dict with filters corresponding to values of the embedded object.
+    def apply(self, query, value):
+        ## TODO: test this filter more
+        raise ValueError,"value must be a dict!"
+        flt = {'{0}.{1}={2}'.format(self.column_name,key,value[key]) for key in value}
+        return query.filter(**flt)
+
+class FilterRelationEmbeddedContains(FilterRelation):
+    name = lazy_gettext('Relation as Embedded')
+    ## value should be a dict with filters corresponding to values of the embedded object.
+    def apply(self, query, value):
+        if not isinstance(value,dict):
+            raise ValueError,"value must be a dict!"
+            ## TODO: test this filter more
+        flt = {'{0}.{1}__icontains={2}'.format(self.column_name,key,value[key]) for key in value}
+        return query.filter(**flt)
+
 
 class MongoEngineFilterConverter(BaseFilterConverter):
     """
@@ -154,5 +173,7 @@ class MongoEngineFilterConverter(BaseFilterConverter):
                         ('is_gridfs_image', [FilterEqual,
                                             FilterNotEqual]),
                         ('is_list', [FilterEqual,
-                                            FilterListContains])
+                                            FilterListContains]),
+                        ('is_embedded', [FilterRelationEmbeddedEqual,
+                                        FilterRelationEmbeddedContains])
                                         )
