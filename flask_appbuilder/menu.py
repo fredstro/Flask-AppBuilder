@@ -1,5 +1,6 @@
 from flask import url_for
-
+import logging
+log = logging.getLogger(__name__)
 
 class MenuItem(object):
     name = ""
