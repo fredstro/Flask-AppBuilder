@@ -1,7 +1,8 @@
 import logging
 import functools
 
-from flask import flash, redirect, url_for, make_response, jsonify
+from flask import flash, redirect, url_for, make_response, jsonify,g
+from flask_login import current_user
 from .._compat import as_unicode
 from ..const import LOGMSG_ERR_SEC_ACCESS_DENIED, FLAMSG_ERR_SEC_ACCESS_DENIED, PERMISSION_PREFIX
 
@@ -22,6 +23,9 @@ def has_access(f):
 
     def wraps(self, *args, **kwargs):
         permission_str = PERMISSION_PREFIX + f._permission_name
+        log.debug(u"HTTP: permission_str: {0} on {1} for user = {2} current_user={3}".format(
+                permission_str,self.__class__.__name__,g.user,current_user))
+      
         if self.appbuilder.sm.has_access(permission_str, self.__class__.__name__):
             return f(self, *args, **kwargs)
         else:
@@ -47,13 +51,21 @@ def has_access_api(f):
         permission_str = f.__name__
 
     def wraps(self, *args, **kwargs):
+        from flask_login import current_user,request,session
+        from flask import g
         permission_str = PERMISSION_PREFIX + f._permission_name
+        log.debug(u" API: permission_str: {0} on {1} for user = {2} current_user={3}".format(
+                permission_str,self.__class__.__name__,g.user,current_user))    
         if self.appbuilder.sm.has_access(permission_str, self.__class__.__name__):
             return f(self, *args, **kwargs)
         else:
+            if current_user.is_authenticated():
+                http_status = 403  ## Authenticated but Forbidden
+            else:
+                http_status = 401  ## Not authenticated
             log.warning(LOGMSG_ERR_SEC_ACCESS_DENIED.format(permission_str, self.__class__.__name__))
             response = make_response(jsonify({'message': str(FLAMSG_ERR_SEC_ACCESS_DENIED),
-                                              'severity': 'danger'}), 401)
+                                              'severity': 'danger'}), http_status)
             response.headers['Content-Type'] = "application/json"
             return response
         return redirect(url_for(self.appbuilder.sm.auth_view.__class__.__name__ + ".login"))
