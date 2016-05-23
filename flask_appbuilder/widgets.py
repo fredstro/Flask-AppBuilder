@@ -104,6 +104,8 @@ class SearchWidget(FormWidget):
         search_filters = {}
         dict_filters = self.filters.get_search_filters()
         for col in self.template_args['include_cols']:
+            if col[0]=='_': # Columns which begin with _ are not listed.
+                continue
             label_columns[col] = as_unicode(self.template_args['form'][col].label.text)
             form_fields[col] = self.template_args['form'][col]()
             search_filters[col] = [as_unicode(flt.name) for flt in dict_filters[col]]
