@@ -23,7 +23,7 @@ Lots of `examples <https://github.com/dpgaspar/Flask-AppBuilder/tree/master/exam
 Package Version
 ---------------
 
-*New 1.6.0*.
+*New 1.6.3*.
 
 If you're already using F.A.B.
 read carefully the `migration <http://flask-appbuilder.readthedocs.org/en/latest/versionmigration.html>`_ procedures.
@@ -39,11 +39,12 @@ You're welcome to report bugs, propose new features, or even better contribute t
 
 `Contribute <https://github.com/dpgaspar/Flask-AppBuilder/fork>`_
 
-Your Projects
--------------
+Projects using FAB
+------------------
 
 If you would like to share your projects and join the list, just send me the link.
 
+- `Caravel <https://github.com/airbnb/caravel>`_ - a data exploration and dashboarding platform
 - `Flog <http://demo-ninmesara.rhcloud.com/category/about>`_
 
 Includes:

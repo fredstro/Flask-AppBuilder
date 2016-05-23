@@ -15,7 +15,8 @@ from ..const import AUTH_OID, AUTH_DB, AUTH_LDAP, \
                     AUTH_REMOTE_USER, AUTH_OAUTH, \
                     LOGMSG_ERR_SEC_AUTH_LDAP, \
                     LOGMSG_WAR_SEC_NO_USER, \
-                    LOGMSG_WAR_SEC_NOLDAP_OBJ
+                    LOGMSG_WAR_SEC_NOLDAP_OBJ, \
+                    LOGMSG_WAR_SEC_LOGIN_FAILED
                     
 log = logging.getLogger(__name__)
 
@@ -175,6 +176,7 @@ class BaseSecurityManager(AbstractSecurityManager):
                 raise Exception("No AUTH_LDAP_SERVER defined on config with AUTH_LDAP authentication type.")
             app.config.setdefault('AUTH_LDAP_SEARCH', '')
             app.config.setdefault('AUTH_LDAP_BIND_USER', '')
+            app.config.setdefault('AUTH_LDAP_APPEND_DOMAIN', '')
             app.config.setdefault('AUTH_LDAP_BIND_PASSWORD', '')
             app.config.setdefault('AUTH_LDAP_ALLOW_SELF_SIGNED', False)
             app.config.setdefault('AUTH_LDAP_UID_FIELD', 'uid')
@@ -250,6 +252,9 @@ class BaseSecurityManager(AbstractSecurityManager):
     def auth_ldap_bind_password(self):
         return self.appbuilder.get_app.config['AUTH_LDAP_BIND_PASSWORD']
 
+    @property
+    def auth_ldap_append_domain(self):
+        return self.appbuilder.get_app.config['AUTH_LDAP_APPEND_DOMAIN']
 
     @property
     def auth_ldap_uid_field(self):
@@ -388,7 +393,8 @@ class BaseSecurityManager(AbstractSecurityManager):
                 self.registeruser_view = self.registeruseroidview()
             elif self.auth_type == AUTH_OAUTH:
                 self.registeruser_view = self.registeruseroauthview()
-            self.appbuilder.add_view_no_menu(self.registeruser_view)
+            if self.registeruser_view:
+                self.appbuilder.add_view_no_menu(self.registeruser_view)
 
         self.appbuilder.add_view_no_menu(self.resetpasswordview())
         self.appbuilder.add_view_no_menu(self.resetmypasswordview())
@@ -504,14 +510,15 @@ class BaseSecurityManager(AbstractSecurityManager):
             return None
         user = self.find_user(username=username)
         if user is None or (not user.is_active()):
+            log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(username))
             return None
         elif check_password_hash(user.password, password):
             self.update_user_auth_stat(user, True)
             return user
         else:
             self.update_user_auth_stat(user, False)
+            log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(username))
             return None
-
 
     def _search_ldap(self, ldap, con, username):
         """
@@ -522,6 +529,8 @@ class BaseSecurityManager(AbstractSecurityManager):
             :param username: username to match with auth_ldap_uid_field
             :return: ldap object array
         """
+        if self.auth_ldap_append_domain:
+            username = username + '@' + self.auth_ldap_append_domain
         filter_str = "%s=%s" % (self.auth_ldap_uid_field, username)
         user = con.search_s(self.auth_ldap_search,
                             ldap.SCOPE_SUBTREE,
@@ -557,7 +566,9 @@ class BaseSecurityManager(AbstractSecurityManager):
                     username = user[0][0]
                 else:
                     return False
-            log.debug("LDAP bind with: {0} {1}".format(username, password))
+            log.debug("LDAP bind with: {0} {1}".format(username, "XXXXXX"))
+            if self.auth_ldap_append_domain:
+                username = username + '@' + self.auth_ldap_append_domain
             con.bind_s(username, password)
             log.debug("LDAP bind OK: {0}".format(username))
             return True
@@ -594,7 +605,9 @@ class BaseSecurityManager(AbstractSecurityManager):
                 con.set_option(ldap.OPT_REFERRALS, 0)
                 # Authenticate user
                 if not self._bind_ldap(ldap, con, username, password):
-                    if user: self.update_user_auth_stat(user, False)
+                    if user:
+                        self.update_user_auth_stat(user, False)
+                    log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(username))
                     return None
                 # If user does not exist on the DB and not self user registration, go away
                 if not user and not self.auth_user_registration:
@@ -634,6 +647,7 @@ class BaseSecurityManager(AbstractSecurityManager):
         """
         user = self.find_user(email=email)
         if user is None or (not user.is_active()):
+            log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(email))
             return None
         else:
             self.update_user_auth_stat(user)
@@ -647,6 +661,7 @@ class BaseSecurityManager(AbstractSecurityManager):
         """
         user = self.find_user(username=username)
         if user is None or (not user.is_active()):
+            log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(username))
             return None
         else:
             self.update_user_auth_stat(user)
@@ -667,6 +682,7 @@ class BaseSecurityManager(AbstractSecurityManager):
             log.error('User info does not have username or email {0}'.format(userinfo))
             return None
         if user is None or (not user.is_active()):
+            log.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(userinfo))
             return None
         else:
             self.update_user_auth_stat(user)

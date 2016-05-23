@@ -1,10 +1,29 @@
 Versions
 ========
 
+Improvements and Bug fixes on 1.6.3
+-----------------------------------
+
+- Fix, Filters were broken on 1.6.2, impact on searches and Unique validators.
+
+Improvements and Bug fixes on 1.6.2
+-----------------------------------
+
+- New, Support for Japanese. Thanks to @giyokun.
+- Fix, #312 Solves String encoding causing column labels to be prefixed with 'b' in Python 3x.
+- Fix, #322 Solves Error on Inline cookie cached, when a record is deleted and it's pk is on the edit cookie.
+- Fix, Bug with numeric filters, converting to correct python type.
+
 Improvements and Bug fixes on 1.6.1
 -----------------------------------
 
 - New, Allowing apps to alter title using a jinja block #284
+- Fix, Prevented user's password being written to debug.
+- New, Added login failed message to log.
+- Fix, Fixes #273 by not registering a view that will not exist for LDAP
+- New, added missing filters for date types for generic models.
+- New, #316, Adding FilterInFunction to models.sqla.filters.
+- New, AUTH_LDAP_APPEND_DOMAIN to always append a certain domain on LDAP user's login.
 
 Improvements and Bug fixes on 1.6.0
 -----------------------------------

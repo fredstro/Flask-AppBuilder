@@ -26,6 +26,18 @@ def get_field_setup_query(query, model, column_name):
     else:
         return query, getattr(model, column_name)
 
+
+def set_value_to_type(datamodel, column_name, value):
+    if datamodel.is_integer(column_name):
+        return int(value)
+    elif datamodel.is_float(column_name):
+        return float(value)
+    elif datamodel.is_boolean(column_name):
+            if value == 'y':
+                return True
+    return value
+
+
 class FilterStartsWith(BaseFilter):
     name = lazy_gettext('Starts with')
 
@@ -79,9 +91,7 @@ class FilterEqual(BaseFilter):
 
     def apply(self, query, value):
         query, field = get_field_setup_query(query, self.model, self.column_name)
-        if self.datamodel.is_boolean(self.column_name):
-            if value == 'y':
-                value = True
+        value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field == value)
 
 
@@ -90,9 +100,7 @@ class FilterNotEqual(BaseFilter):
 
     def apply(self, query, value):
         query, field = get_field_setup_query(query, self.model, self.column_name)
-        if self.datamodel.is_boolean(self.column_name):
-            if value == 'y':
-                value = True
+        value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field != value)
 
 
@@ -101,6 +109,7 @@ class FilterGreater(BaseFilter):
 
     def apply(self, query, value):
         query, field = get_field_setup_query(query, self.model, self.column_name)
+        value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field > value)
 
 
@@ -109,6 +118,7 @@ class FilterSmaller(BaseFilter):
 
     def apply(self, query, value):
         query, field = get_field_setup_query(query, self.model, self.column_name)
+        value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field < value)
 
 
@@ -145,6 +155,14 @@ class FilterEqualFunction(BaseFilter):
     def apply(self, query, func):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(field == func())
+
+
+class FilterInFunction(BaseFilter):
+    name = "Filter view where field is in a list returned by a function"
+
+    def apply(self, query, func):
+        query, field = get_field_setup_query(query, self.model, self.column_name)
+        return query.filter(field.in_(func()))
 
 
 class SQLAFilterConverter(BaseFilterConverter):
