@@ -923,6 +923,7 @@ class BaseCRUDView(BaseModelView):
             Edit function logic, override to implement diferent logic
             returns Edit widget and related list or None
         """
+        from werkzeug.security import generate_password_hash
         is_valid_form = True
         pages = get_page_args()
         page_sizes = get_page_size_args()
@@ -940,13 +941,28 @@ class BaseCRUDView(BaseModelView):
             # fill the form with the suppressed cols, generated from exclude_cols
             self._fill_form_exclude_cols(exclude_cols, form)
             # trick to pass unique validation
-            log.critical("IN _EDIT. POST \n\n\n\n\n\n\n")
-            log.critical("item={0}".format(item))
-            log.critical("item.cv={0}".format(item.cv))
+            log.debug("\n\n\n\n\n\n\n IN _EDIT. POST ")
+            log.debug("item={0}".format(item))
             form._id = pk
             if form.validate():
-                log.critical("item.cv={0}".format(item.cv))
+                ## Password fields need special treatment since we don't want them to be overridden and 
+                ## we don't show them as default values in forms.
+                hashed_password = ''
+                if hasattr(item,'password'):
+                    log.debug("item.password={0}".format(item.password))
+                if hasattr(form,'password'):
+                    if form.password.data != '':
+                        # set new password
+                        hashed_password = generate_password_hash(form.password.data)
+                    else:
+                        # keep old password
+                        hashed_password = item.password
                 form.populate_obj(item)
+                if hashed_password != '':
+                    setattr(item,'password',hashed_password)
+                if hasattr(item,'password'):
+                    log.debug("item.password={0}".format(item.password))
+
                 self.pre_update(item)
                 if self.datamodel.edit(item):
                     self.post_update(item)
