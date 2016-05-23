@@ -2,7 +2,7 @@ import logging
 from flask_wtf import Form
 from wtforms import (BooleanField, StringField,
                      TextAreaField, IntegerField, FloatField,
-                      DateField, DateTimeField, DecimalField)
+                      DateField, DateTimeField, DecimalField,FormField)
 from .fields import QuerySelectMultipleField, QuerySelectField
 
 from wtforms import validators
@@ -11,7 +11,8 @@ from .fieldwidgets import (BS3TextAreaFieldWidget,
                            DatePickerWidget,
                            DateTimePickerWidget,
                            Select2Widget,
-                           Select2ManyWidget)
+                           Select2ManyWidget,
+                           FormFieldWidget)
 from .upload import (BS3FileUploadFieldWidget,
                      BS3ImageUploadFieldWidget,
                      FileUploadField,
@@ -46,6 +47,7 @@ class FieldConverter(object):
                         ('is_boolean', BooleanField, None),
                         ('is_date', DateField, DatePickerWidget),
                         ('is_datetime', DateTimeField, DateTimePickerWidget),
+                        ('is_embedded', FormField,FormFieldWidget),
     )
 
     def __init__(self, datamodel, colname, label, description, validators, default=None):
@@ -79,9 +81,10 @@ class GeneralModelConverter(object):
         method 'create_form'
     """
 
-    def __init__(self, datamodel):
+    def __init__(self, datamodel,formclass=None):
         self.datamodel = datamodel
-
+        self.formclass = formclass or DynamicForm
+        assert issubclass(self.formclass,Form)
     @staticmethod
     def _get_validators(col_name, validators_columns):
         return validators_columns.get(col_name, [])
@@ -234,7 +237,7 @@ class GeneralModelConverter(object):
                                   self._get_description(col_name, description_columns),
                                   self._get_validators(col_name, validators_columns),
                                   filter_rel_fields, form_props)
-        return type('DynamicForm', (DynamicForm,), form_props)
+        return type(self.formclass.__name__, (self.formclass,), form_props)
 
 
 class DynamicForm(Form):
