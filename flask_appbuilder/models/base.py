@@ -132,6 +132,9 @@ class BaseInterface(object):
     def is_text(self, col_name):
         return False
 
+    def is_embedded(self,col_name):
+        return False
+    
     def is_integer(self, col_name):
         return False
 
