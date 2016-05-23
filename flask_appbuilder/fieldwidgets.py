@@ -114,3 +114,24 @@ class Select2ManyWidget(widgets.Select):
         if 'name_' in kwargs:
             field.name = kwargs['name_']
         return super(Select2ManyWidget, self).__call__(field, **kwargs)
+
+
+class FormFieldWidget(widgets.ListWidget):
+    r"""
+    Renders a formfield by default as a list.
+    """
+    extra_classes = None
+
+    def __init__(self, extra_classes=None):
+        self.extra_classes = extra_classes
+        return super(FormFieldWidget, self).__init__()
+
+    def __call__(self, field, **kwargs):
+        kwargs['class'] = u'form-control'
+        if self.extra_classes:
+            kwargs['class'] = kwargs['class'] + ' ' + self.extra_classes
+        #kwargs['style'] = u'width:250px'
+        #kwargs['data-placeholder'] = u'Select Value'
+        if 'name_' in kwargs:
+            field.name = kwargs['name_']
+        return super(FormFieldWidget, self).__call__(field, **kwargs)
